@@ -1,0 +1,113 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.8",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "e25095e310080d9a917aec6916314b74",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "f5cced3124db3df937ea16cb2eb4c54f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "fc36cf25d96f909c43178b3464725a2c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"housing-panel-explorer\">Housing Panel Explorer</h1></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "3503c3f8b2cb61dee7359ae94d1912e2",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "88a2b4c193932b636e90c18e246e74b4",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "3f8e80c6f7df40b3b9bda53236c58918",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "054da8dc25d89a556ab414d7b503aeb7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: row;justify-content: space-between;align-items: flex-end;flex-wrap: nowrap;gap: 2rem'><marimo-ui-element object-id='bkHC-0' random-id='e5bdb7b4-a8bf-25fa-1ecc-bb4f37cc0845'><marimo-dropdown data-initial-value='[&quot;Affordability Ratio (Value \u00f7 Income)&quot;]' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003eIndicator&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-options='[&quot;Median Home Value (&#36;)&quot;,&quot;Median Gross Rent (&#36;/mo)&quot;,&quot;Homeownership Rate&quot;,&quot;Vacancy Rate&quot;,&quot;House Price Index (FHFA)&quot;,&quot;Building Permits \u2014 Total Units&quot;,&quot;Building Permits \u2014 Single Family&quot;,&quot;Median Household Income (&#36;)&quot;,&quot;Poverty Rate (%)&quot;,&quot;Population&quot;,&quot;Net Domestic Migration&quot;,&quot;Unemployment Rate (%)&quot;,&quot;30-yr Mortgage Rate (%)&quot;,&quot;Affordability Ratio (Value \u00f7 Income)&quot;,&quot;Rent Burden (Annual Rent \u00f7 Income)&quot;,&quot;Permits per 1,000 Population&quot;]' data-allow-select-none='false' data-searchable='false' data-full-width='false' data-disabled='false'></marimo-dropdown></marimo-ui-element><marimo-ui-element object-id='lEQa-0' random-id='99b2133d-3f78-430d-ff04-7a62a8037e10'><marimo-multiselect data-initial-value='[&quot;CA&quot;,&quot;TX&quot;,&quot;FL&quot;,&quot;NY&quot;,&quot;OH&quot;]' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003eStates&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-options='[&quot;AK&quot;,&quot;AL&quot;,&quot;AR&quot;,&quot;AZ&quot;,&quot;CA&quot;,&quot;CO&quot;,&quot;CT&quot;,&quot;DC&quot;,&quot;DE&quot;,&quot;FL&quot;,&quot;GA&quot;,&quot;HI&quot;,&quot;IA&quot;,&quot;ID&quot;,&quot;IL&quot;,&quot;IN&quot;,&quot;KS&quot;,&quot;KY&quot;,&quot;LA&quot;,&quot;MA&quot;,&quot;MD&quot;,&quot;ME&quot;,&quot;MI&quot;,&quot;MN&quot;,&quot;MO&quot;,&quot;MS&quot;,&quot;MT&quot;,&quot;NC&quot;,&quot;ND&quot;,&quot;NE&quot;,&quot;NH&quot;,&quot;NJ&quot;,&quot;NM&quot;,&quot;NV&quot;,&quot;NY&quot;,&quot;OH&quot;,&quot;OK&quot;,&quot;OR&quot;,&quot;PA&quot;,&quot;RI&quot;,&quot;SC&quot;,&quot;SD&quot;,&quot;TN&quot;,&quot;TX&quot;,&quot;UT&quot;,&quot;VA&quot;,&quot;VT&quot;,&quot;WA&quot;,&quot;WI&quot;,&quot;WV&quot;,&quot;WY&quot;]' data-full-width='false' data-disabled='false'></marimo-multiselect></marimo-ui-element><marimo-ui-element object-id='PKri-0' random-id='3fc31af8-acea-3084-dd09-d68da2468625'><marimo-range-slider data-initial-value='[2010,2024]' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003eYear range&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-start='2010' data-stop='2024' data-step='1' data-steps='[]' data-debounce='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-full-width='false' data-disabled='false'></marimo-range-slider></marimo-ui-element></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "4140a498d1aca39b3284f20ba57f0e09",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "application/vnd.vegalite.v6+json": "{\n  \"$schema\": \"https://vega.github.io/schema/vega-lite/v6.4.1.json\",\n  \"config\": {\n    \"legend\": {\n      \"labelLimit\": 300\n    },\n    \"point\": {\n      \"size\": 60\n    },\n    \"title\": {\n      \"anchor\": \"start\",\n      \"fontSize\": 14\n    },\n    \"view\": {\n      \"continuousHeight\": 300,\n      \"continuousWidth\": 300\n    }\n  },\n  \"data\": {\n    \"name\": \"data-f7c96ea09463d1162ac41971e547a0e5\"\n  },\n  \"datasets\": {\n    \"data-f7c96ea09463d1162ac41971e547a0e5\": [\n      {\n        \"rent_burden\": 0.2420227524972253,\n        \"state_abbr\": \"CA\",\n        \"year\": 2010\n      },\n      {\n        \"rent_burden\": 0.2459711916193802,\n        \"state_abbr\": \"CA\",\n        \"year\": 2011\n      },\n      {\n        \"rent_burden\": 0.24690511299338158,\n        \"state_abbr\": \"CA\",\n        \"year\": 2012\n      },\n      {\n        \"rent_burden\": 0.24404752014621584,\n        \"state_abbr\": \"CA\",\n        \"year\": 2013\n      },\n      {\n        \"rent_burden\": 0.24570865696707414,\n        \"state_abbr\": \"CA\",\n        \"year\": 2014\n      },\n      {\n        \"rent_burden\": 0.24397127925189585,\n        \"state_abbr\": \"CA\",\n        \"year\": 2015\n      },\n      {\n        \"rent_burden\": 0.2436683157350661,\n        \"state_abbr\": \"CA\",\n        \"year\": 2016\n      },\n      {\n        \"rent_burden\": 0.241888974019642,\n        \"state_abbr\": \"CA\",\n        \"year\": 2017\n      },\n      {\n        \"rent_burden\": 0.2423920265780731,\n        \"state_abbr\": \"CA\",\n        \"year\": 2018\n      },\n      {\n        \"rent_burden\": 0.24082662919811496,\n        \"state_abbr\": \"CA\",\n        \"year\": 2019\n      },\n      {\n        \"rent_burden\": 0.24755101319093256,\n        \"state_abbr\": \"CA\",\n        \"year\": 2021\n      },\n      {\n        \"rent_burden\": 0.24520034529103882,\n        \"state_abbr\": \"CA\",\n        \"year\": 2022\n      },\n      {\n        \"rent_burden\": 0.25037445141558345,\n        \"state_abbr\": \"CA\",\n        \"year\": 2023\n      },\n      {\n        \"rent_burden\": 0.2521522021372216,\n        \"state_abbr\": \"CA\",\n        \"year\": 2024\n      },\n      {\n        \"rent_burden\": 0.19032916138280861,\n        \"state_abbr\": \"CO\",\n        \"year\": 2010\n      },\n      {\n        \"rent_burden\": 0.19448946515397084,\n        \"state_abbr\": \"CO\",\n        \"year\": 2011\n      },\n      {\n        \"rent_burden\": 0.19704641350210972,\n        \"state_abbr\": \"CO\",\n        \"year\": 2012\n      },\n      {\n        \"rent_burden\": 0.19768586067659732,\n        \"state_abbr\": \"CO\",\n        \"year\": 2013\n      },\n      {\n        \"rent_burden\": 0.19959559063335724,\n        \"state_abbr\": \"CO\",\n        \"year\": 2014\n      },\n      {\n        \"rent_burden\": 0.2084916725310814,\n        \"state_abbr\": \"CO\",\n        \"year\": 2015\n      },\n      {\n        \"rent_burden\": 0.21382269697799688,\n        \"state_abbr\": \"CO\",\n        \"year\": 2016\n      },\n      {\n        \"rent_burden\": 0.21529958184422612,\n        \"state_abbr\": \"CO\",\n        \"year\": 2017\n      },\n      {\n        \"rent_burden\": 0.21498561481049078,\n        \"state_abbr\": \"CO\",\n        \"year\": 2018\n      },\n      {\n        \"rent_burden\": 0.21306287611537664,\n        \"state_abbr\": \"CO\",\n        \"year\": 2019\n      },\n      {\n        \"rent_burden\": 0.2175901152891959,\n        \"state_abbr\": \"CO\",\n        \"year\": 2021\n      },\n      {\n        \"rent_burden\": 0.22169345425159379,\n        \"state_abbr\": \"CO\",\n        \"year\": 2022\n      },\n      {\n        \"rent_burden\": 0.22903330100226318,\n        \"state_abbr\": \"CO\",\n        \"year\": 2023\n      },\n      {\n        \"rent_burden\": 0.22570222254338243,\n        \"state_abbr\": \"CO\",\n        \"year\": 2024\n      },\n      {\n        \"rent_burden\": 0.25600360441540887,\n        \"state_abbr\": \"FL\",\n        \"year\": 2010\n      },\n      {\n        \"rent_burden\": 0.2573559322033898,\n        \"state_abbr\": \"FL\",\n        \"year\": 2011\n      },\n      {\n        \"rent_burden\": 0.2543660845220637,\n        \"state_abbr\": \"FL\",\n        \"year\": 2012\n      },\n      {\n        \"rent_burden\": 0.2534495121792225,\n        \"state_abbr\": \"FL\",\n        \"year\": 2013\n      },\n      {\n        \"rent_burden\": 0.2537152975399987,\n        \"state_abbr\": \"FL\",\n        \"year\": 2014\n      },\n      {\n        \"rent_burden\": 0.2540067994171928,\n        \"state_abbr\": \"FL\",\n        \"year\": 2015\n      },\n      {\n        \"rent_burden\": 0.2562479108087382,\n        \"state_abbr\": \"FL\",\n        \"year\": 2016\n      },\n      {\n        \"rent_burden\": 0.257426495759005,\n        \"state_abbr\": \"FL\",\n        \"year\": 2017\n      },\n      {\n        \"rent_burden\": 0.2558764634784334,\n        \"state_abbr\": \"FL\",\n        \"year\": 2018\n      },\n      {\n        \"rent_burden\": 0.25095442413595054,\n        \"state_abbr\": \"FL\",\n        \"year\": 2019\n      },\n      {\n        \"rent_burden\": 0.25654201160909695,\n        \"state_abbr\": \"FL\",\n        \"year\": 2021\n      },\n      {\n        \"rent_burden\": 0.26411881016640926,\n        \"state_abbr\": \"FL\",\n        \"year\": 2022\n      },\n      {\n        \"rent_burden\": 0.28148410954791697,\n        \"state_abbr\": \"FL\",\n        \"year\": 2023\n      },\n      {\n        \"rent_burden\": 0.2798923886879401,\n        \"state_abbr\": \"FL\",\n        \"year\": 2024\n      },\n      {\n        \"rent_burden\": 0.22646955427683313,\n        \"state_abbr\": \"NY\",\n        \"year\": 2010\n      },\n      {\n        \"rent_burden\": 0.23022104556911527,\n        \"state_abbr\": \"NY\",\n        \"year\": 2011\n      },\n      {\n        \"rent_burden\": 0.22974963181148747,\n        \"state_abbr\": \"NY\",\n        \"year\": 2012\n      },\n      {\n        \"rent_burden\": 0.2324338485721771,\n        \"state_abbr\": \"NY\",\n        \"year\": 2013\n      },\n      {\n        \"rent_burden\": 0.23440132037909853,\n        \"state_abbr\": \"NY\",\n        \"year\": 2014\n      },\n      {\n        \"rent_burden\": 0.23149412054929694,\n        \"state_abbr\": \"NY\",\n        \"year\": 2015\n      },\n      {\n        \"rent_burden\": 0.22851674641148326,\n        \"state_abbr\": \"NY\",\n        \"year\": 2016\n      },\n      {\n        \"rent_burden\": 0.22709661485266197,\n        \"state_abbr\": \"NY\",\n        \"year\": 2017\n      },\n      {\n        \"rent_burden\": 0.2259933774834437,\n        \"state_abbr\": \"NY\",\n        \"year\": 2018\n      },\n      {\n        \"rent_burden\": 0.21805158388628224,\n        \"state_abbr\": \"NY\",\n        \"year\": 2019\n      },\n      {\n        \"rent_burden\": 0.22777852620234407,\n        \"state_abbr\": \"NY\",\n        \"year\": 2021\n      },\n      {\n        \"rent_burden\": 0.22636950530435548,\n        \"state_abbr\": \"NY\",\n        \"year\": 2022\n      },\n      {\n        \"rent_burden\": 0.22829425242529128,\n        \"state_abbr\": \"NY\",\n        \"year\": 2023\n      },\n      {\n        \"rent_burden\": 0.22861673351366477,\n        \"state_abbr\": \"NY\",\n        \"year\": 2024\n      },\n      {\n        \"rent_burden\": 0.1820557684215189,\n        \"state_abbr\": \"OH\",\n        \"year\": 2010\n      },\n      {\n        \"rent_burden\": 0.18129816824225486,\n        \"state_abbr\": \"OH\",\n        \"year\": 2011\n      },\n      {\n        \"rent_burden\": 0.17920764619290422,\n        \"state_abbr\": \"OH\",\n        \"year\": 2012\n      },\n      {\n        \"rent_burden\": 0.17674186713199552,\n        \"state_abbr\": \"OH\",\n        \"year\": 2013\n      },\n      {\n        \"rent_burden\": 0.17872702587691747,\n        \"state_abbr\": \"OH\",\n        \"year\": 2014\n      },\n      {\n        \"rent_burden\": 0.17523391927338214,\n        \"state_abbr\": \"OH\",\n        \"year\": 2015\n      },\n      {\n        \"rent_burden\": 0.17395954695647192,\n        \"state_abbr\": \"OH\",\n        \"year\": 2016\n      },\n      {\n        \"rent_burden\": 0.1713112783623352,\n        \"state_abbr\": \"OH\",\n        \"year\": 2017\n      },\n      {\n        \"rent_burden\": 0.17031430861009705,\n        \"state_abbr\": \"OH\",\n        \"year\": 2018\n      },\n      {\n        \"rent_burden\": 0.1661896974652494,\n        \"state_abbr\": \"OH\",\n        \"year\": 2019\n      },\n      {\n        \"rent_burden\": 0.16761391002793566,\n        \"state_abbr\": \"OH\",\n        \"year\": 2021\n      },\n      {\n        \"rent_burden\": 0.1731067400358739,\n        \"state_abbr\": \"OH\",\n        \"year\": 2022\n      },\n      {\n        \"rent_burden\": 0.17927600076613676,\n        \"state_abbr\": \"OH\",\n        \"year\": 2023\n      },\n      {\n        \"rent_burden\": 0.1810155136384395,\n        \"state_abbr\": \"OH\",\n        \"year\": 2024\n      },\n      {\n        \"rent_burden\": 0.19768828925177903,\n        \"state_abbr\": \"TX\",\n        \"year\": 2010\n      },\n      {\n        \"rent_burden\": 0.1975298643450091,\n        \"state_abbr\": \"TX\",\n        \"year\": 2011\n      },\n      {\n        \"rent_burden\": 0.1965042268508483,\n        \"state_abbr\": \"TX\",\n        \"year\": 2012\n      },\n      {\n        \"rent_burden\": 0.19886297714352014,\n        \"state_abbr\": \"TX\",\n        \"year\": 2013\n      },\n      {\n        \"rent_burden\": 0.20261179263949347,\n        \"state_abbr\": \"TX\",\n        \"year\": 2014\n      },\n      {\n        \"rent_burden\": 0.2009053675361069,\n        \"state_abbr\": \"TX\",\n        \"year\": 2015\n      },\n      {\n        \"rent_burden\": 0.20274640793171095,\n        \"state_abbr\": \"TX\",\n        \"year\": 2016\n      },\n      {\n        \"rent_burden\": 0.2000844665934623,\n        \"state_abbr\": \"TX\",\n        \"year\": 2017\n      },\n      {\n        \"rent_burden\": 0.20701939569864097,\n        \"state_abbr\": \"TX\",\n        \"year\": 2018\n      },\n      {\n        \"rent_burden\": 0.20442195990256698,\n        \"state_abbr\": \"TX\",\n        \"year\": 2019\n      },\n      {\n        \"rent_burden\": 0.20914290834689886,\n        \"state_abbr\": \"TX\",\n        \"year\": 2021\n      },\n      {\n        \"rent_burden\": 0.21417009089777114,\n        \"state_abbr\": \"TX\",\n        \"year\": 2022\n      },\n      {\n        \"rent_burden\": 0.22375887460740584,\n        \"state_abbr\": \"TX\",\n        \"year\": 2023\n      },\n      {\n        \"rent_burden\": 0.22201873988685825,\n        \"state_abbr\": \"TX\",\n        \"year\": 2024\n      }\n    ]\n  },\n  \"encoding\": {\n    \"color\": {\n      \"field\": \"state_abbr\",\n      \"title\": \"State\",\n      \"type\": \"nominal\"\n    },\n    \"opacity\": {\n      \"condition\": {\n        \"param\": \"param_d36303c9e613d48d\",\n        \"value\": 1\n      },\n      \"value\": 0.1\n    },\n    \"tooltip\": [\n      {\n        \"field\": \"state_abbr\",\n        \"title\": \"State\",\n        \"type\": \"nominal\"\n      },\n      {\n        \"field\": \"year\",\n        \"title\": \"Year\",\n        \"type\": \"ordinal\"\n      },\n      {\n        \"field\": \"rent_burden\",\n        \"format\": \",.2f\",\n        \"title\": \"Rent Burden (Annual Rent \u00f7 Income)\",\n        \"type\": \"quantitative\"\n      }\n    ],\n    \"x\": {\n      \"axis\": {\n        \"labelAngle\": 0\n      },\n      \"field\": \"year\",\n      \"title\": \"Year\",\n      \"type\": \"ordinal\"\n    },\n    \"y\": {\n      \"field\": \"rent_burden\",\n      \"title\": \"Rent Burden (Annual Rent \u00f7 Income)\",\n      \"type\": \"quantitative\"\n    }\n  },\n  \"height\": 460,\n  \"mark\": {\n    \"point\": {\n      \"size\": 60\n    },\n    \"type\": \"line\"\n  },\n  \"params\": [\n    {\n      \"bind\": \"legend\",\n      \"name\": \"param_d36303c9e613d48d\",\n      \"select\": {\n        \"fields\": [\n          \"state_abbr\"\n        ],\n        \"type\": \"point\"\n      }\n    }\n  ],\n  \"title\": \"Rent Burden (Annual Rent \u00f7 Income)  |  2010\u20132024\",\n  \"usermeta\": {\n    \"embedOptions\": {}\n  },\n  \"width\": 820\n}"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

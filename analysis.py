@@ -10,6 +10,7 @@ def _():
     import altair as alt
     from vega_datasets import data as vega_data
     import marimo as mo
+
     return alt, mo, pd, vega_data
 
 
@@ -20,37 +21,42 @@ def _(pd):
     _raw = _raw.sort_values(["fips_state", "year"])
     _raw["hpi_growth"] = _raw.groupby("fips_state")["hpi_at_annual"].pct_change() * 100
     panel = _raw.reset_index(drop=True)
-    return panel,
+    return (panel,)
 
 
 @app.cell
 def _(vega_data):
     # Load topojson once — not inside reactive cells
     states_topo = vega_data.us_10m.url
-    return states_topo,
+    return (states_topo,)
 
 
 @app.cell
 def _(mo):
-    mo.md("# US Housing Market Analysis")
+    mo.md("""
+    # US Housing Market Analysis
+    """)
+    return
 
-
-# ── Chart 1: Affordability choropleth ────────────────────────────────────────
 
 @app.cell
 def _(mo):
-    mo.md("## 1 — Affordability Ratio by State\nHome value ÷ household income. Slide to change year.")
+    mo.md("""
+    ## 1 — Affordability Ratio by State
+    Home value ÷ household income. Slide to change year.
+    """)
+    return
 
 
 @app.cell
 def _(mo):
     year_slider = mo.ui.slider(start=2010, stop=2024, step=1, value=2024, label="Year")
     year_slider
-    return year_slider,
+    return (year_slider,)
 
 
 @app.cell
-def _(alt, panel, states_topo, year_slider):
+def _(panel, states_topo, year_slider):
     import altair as _alt
     _df = panel[panel["year"] == year_slider.value].copy()
 
@@ -87,13 +93,16 @@ def _(alt, panel, states_topo, year_slider):
         .configure_title(fontSize=14, anchor="start")
     )
     _choropleth
+    return
 
-
-# ── Chart 2: HPI vs unemployment ─────────────────────────────────────────────
 
 @app.cell
 def _(mo):
-    mo.md("## 2 — House Price Index vs. Unemployment\nHPI indexed to 2010 = 100. Click legend to highlight a state.")
+    mo.md("""
+    ## 2 — House Price Index vs. Unemployment
+    HPI indexed to 2010 = 100. Click legend to highlight a state.
+    """)
+    return
 
 
 @app.cell
@@ -105,7 +114,7 @@ def _(mo, panel):
         label="States",
     )
     state_select
-    return state_select,
+    return (state_select,)
 
 
 @app.cell
@@ -165,13 +174,16 @@ def _(alt, panel, state_select):
             .configure_legend(labelLimit=200)
             .configure_title(fontSize=13, anchor="start")
         )
+    return
 
-
-# ── Chart 3: Supply vs price growth ──────────────────────────────────────────
 
 @app.cell
 def _(mo):
-    mo.md("## 3 — Housing Supply vs. Price Growth\nEach point = one state-year. Drag to select; size = population.")
+    mo.md("""
+    ## 3 — Housing Supply vs. Price Growth
+    Each point = one state-year. Drag to select; size = population.
+    """)
+    return
 
 
 @app.cell
@@ -212,6 +224,7 @@ def _(alt, panel):
         )
         .configure_title(fontSize=13, anchor="start")
     )
+    return
 
 
 if __name__ == "__main__":

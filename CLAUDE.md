@@ -6,7 +6,11 @@ Build a state-level panel dataset (2010–2024) linking US housing market indica
 ## Stack
 - **Python** managed with **`uv`** (uv 0.11.16, Python 3.14)
 - `pandas`, `requests`, `fredapi`, `duckdb`, `pyarrow`, `xlrd`, `openpyxl`
-- Install deps: `uv add pandas requests fredapi duckdb pyarrow xlrd openpyxl`
+- `altair`, `vega_datasets`, `marimo`, `jupyter`, `jupytext`
+- Install deps: `uv sync` (all deps in pyproject.toml)
+
+## GitHub
+https://github.com/hhm-gh/housing (private)
 
 ## Project structure
 ```
@@ -19,6 +23,10 @@ housing/
 ├── collect_bls.py          # LAUS unemployment rate (BLS API v2)
 ├── collect_fred.py         # 30-yr mortgage rate (FRED API)
 ├── assemble_panel.py       # Joins all sources into panel.parquet + panel.duckdb
+├── analysis.ipynb          # Jupyter: curated charts (choropleth, time series, scatter)
+├── analysis_nb.py          # Jupytext source for analysis.ipynb
+├── analysis.py             # Marimo: same curated charts, reactive widgets
+├── explore.py              # Marimo: open-ended explorer — any column × states × years
 ├── .env                    # API keys (gitignored)
 └── data/                   # Output files (gitignored)
     ├── acs_housing.parquet
@@ -107,18 +115,32 @@ uv run assemble_panel.py
 - **BLS QCEW wages not yet collected**: Originally planned; would add median weekly wages by state. Requires BLS series IDs per state × industry.
 - **Mortgage rate is national**: FRED MORTGAGE30US doesn't vary by state. Useful as a time-series control variable and for payment-based affordability, but not for cross-state comparisons.
 
-## Analysis layer (next step)
+## Running the notebooks
+```bash
+uv run marimo edit analysis.py    # curated analysis (choropleth, HPI vs unemployment, scatter)
+uv run marimo edit explore.py     # open-ended explorer (any column × states × year range)
+uv run jupyter notebook analysis.ipynb
+```
+
+## Marimo gotchas
+- Variables prefixed with `_` are cell-local — use unprefixed names for anything shared between cells
+- Cell output must be the last bare expression — charts inside `if/else` blocks never render; use `mo.stop(condition, output)` for guards instead
+- `mo.ui.dropdown(value=...)` must match an options key (the label), not the underlying value
+- Does not always hot-reload on file save — restart with `Ctrl+C` + `uv run marimo edit <file>`
+
+## Analysis layer (next steps)
 - Affordability and rent burden trends by state
 - Housing supply elasticity: permit growth vs. population/employment growth
 - Cross-state regression: how well does employment/income predict HPI growth?
 - Pre/post-COVID comparisons (2019 vs. 2021–2024)
 
 ## Next step when resuming
-Panel is complete. Begin analysis in a new script or notebook:
+Notebooks are working. Use `explore.py` for ad-hoc investigation, `analysis.py` for the curated story.
+To load the panel directly:
 ```python
 import pandas as pd
 panel = pd.read_parquet("data/panel.parquet")
-# or
+# or via SQL
 import duckdb
 con = duckdb.connect("data/panel.duckdb")
 con.execute("SELECT * FROM panel WHERE state_abbr = 'CA'").df()
