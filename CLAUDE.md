@@ -10,7 +10,7 @@ Build a state-level panel dataset (2010–2024) linking US housing market indica
 - Install deps: `uv sync` (all deps in pyproject.toml)
 
 ## GitHub
-https://github.com/hhm-gh/housing (private)
+https://github.com/hhm-gh/housing (public)
 
 ## Project structure
 ```
