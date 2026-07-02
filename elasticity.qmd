@@ -1,0 +1,164 @@
+---
+title: "Housing Supply Elasticity"
+subtitle: "Per-state OLS, 2010–2024: level–level and log–log"
+format:
+  html:
+    embed-resources: true
+    toc: true
+    fig-width: 12
+    fig-height: 5
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+library(arrow)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(forcats)
+library(ggplot2)
+library(scales)
+library(tigris)
+library(sf)
+library(patchwork)
+library(ggrepel)
+
+options(tigris_use_cache = TRUE)
+
+panel <- read_parquet("data/panel.parquet")
+```
+
+```{r fit}
+elasticity_linear <- panel |>
+  filter(!is.na(permits_per_1000_pop), !is.na(hpi_at_annual)) |>
+  group_by(fips_state, state_name, state_abbr) |>
+  filter(n() >= 3) |>
+  nest() |>
+  mutate(
+    slope = map_dbl(data, \(d)
+      coef(lm(permits_per_1000_pop ~ hpi_at_annual, data = d))[["hpi_at_annual"]]
+    )
+  ) |>
+  select(!data) |>
+  ungroup()
+
+elasticity_loglog <- panel |>
+  filter(!is.na(permits_per_1000_pop), !is.na(hpi_at_annual),
+         permits_per_1000_pop > 0, hpi_at_annual > 0) |>
+  group_by(fips_state, state_name, state_abbr) |>
+  filter(n() >= 3) |>
+  nest() |>
+  mutate(
+    coef = map_dbl(data, \(d)
+      coef(lm(log(permits_per_1000_pop) ~ log(hpi_at_annual), data = d))[["log(hpi_at_annual)"]]
+    )
+  ) |>
+  select(!data) |>
+  ungroup()
+```
+
+```{r geo}
+states_sf <- states(cb = TRUE, resolution = "20m", year = 2022) |>
+  filter(!STUSPS %in% c("PR", "GU", "VI", "MP", "AS")) |>
+  shift_geometry()
+
+lin_sf <- states_sf |> left_join(elasticity_linear, by = c("GEOID" = "fips_state"))
+ll_sf  <- states_sf |> left_join(elasticity_loglog,  by = c("GEOID" = "fips_state"))
+
+lin_lim <- quantile(abs(elasticity_linear$slope),       0.95, na.rm = TRUE)
+ll_dev  <- quantile(abs(elasticity_loglog$coef  - 1.0), 0.95, na.rm = TRUE)
+```
+
+## Choropleths
+
+```{r choropleths}
+p_choro_lin <- ggplot(lin_sf) +
+  geom_sf(aes(fill = slope), color = "white", linewidth = 0.3) +
+  scale_fill_gradient2(
+    low = "#2166ac", mid = "grey92", high = "#d6604d", midpoint = 0,
+    limits = c(-lin_lim, lin_lim), oob = scales::squish,
+    name = "Slope\n(permits / HPI pt)"
+  ) +
+  labs(title = "Linear: Level–Level OLS Slope") +
+  theme_void(base_size = 11) +
+  theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5))
+
+p_choro_ll <- ggplot(ll_sf) +
+  geom_sf(aes(fill = coef), color = "white", linewidth = 0.3) +
+  scale_fill_gradient2(
+    low = "#2166ac", mid = "grey92", high = "#d6604d", midpoint = 1,
+    limits = c(1 - ll_dev, 1 + ll_dev), oob = scales::squish,
+    name = "β (% Δ permits / % Δ HPI)"
+  ) +
+  labs(title = "Log-Log: Elasticity Coefficient  (β = 1 → unit elasticity)") +
+  theme_void(base_size = 11) +
+  theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5))
+
+p_choro_lin + p_choro_ll
+```
+
+## Ranked Bar Charts
+
+```{r bars, fig.height=10}
+p_bar_lin <- elasticity_linear |>
+  mutate(state_abbr = fct_reorder(state_abbr, slope)) |>
+  ggplot(aes(x = slope, y = state_abbr, fill = slope)) +
+  geom_col() +
+  scale_fill_gradient2(
+    low = "#2166ac", mid = "grey92", high = "#d6604d", midpoint = 0,
+    limits = c(-lin_lim, lin_lim), oob = scales::squish, guide = "none"
+  ) +
+  labs(x = "Slope (permits / HPI pt)", y = NULL,
+       title = "Linear: Level–Level") +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+p_bar_ll <- elasticity_loglog |>
+  mutate(state_abbr = fct_reorder(state_abbr, coef)) |>
+  ggplot(aes(x = coef, y = state_abbr, fill = coef)) +
+  geom_col() +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "gray40", linewidth = 0.5) +
+  scale_fill_gradient2(
+    low = "#2166ac", mid = "grey92", high = "#d6604d", midpoint = 1,
+    limits = c(1 - ll_dev, 1 + ll_dev), oob = scales::squish, guide = "none"
+  ) +
+  labs(x = "Elasticity β", y = NULL,
+       title = "Log-Log: Elasticity Coefficient") +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+p_bar_lin + p_bar_ll
+```
+
+## Scatter: Elasticity vs. Average Supply
+
+Do states with higher log-log elasticity actually permit more housing? The dashed
+line marks unit elasticity (β = 1): supply growing proportionally with prices.
+
+```{r scatter, fig.width=9, fig.height=7}
+avg_permits <- panel |>
+  filter(!is.na(permits_per_1000_pop)) |>
+  group_by(fips_state, state_abbr, state_name) |>
+  summarise(avg_permits = mean(permits_per_1000_pop), .groups = "drop")
+
+elasticity_loglog |>
+  left_join(avg_permits, by = c("fips_state", "state_abbr", "state_name")) |>
+  ggplot(aes(x = coef, y = avg_permits)) +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "gray50") +
+  geom_point(aes(color = coef), size = 3) +
+  geom_text_repel(aes(label = state_abbr), size = 3, max.overlaps = 40) +
+  scale_color_gradient2(
+    low = "#2166ac", mid = "grey70", high = "#d6604d", midpoint = 1,
+    limits = c(1 - ll_dev, 1 + ll_dev), oob = scales::squish, guide = "none"
+  ) +
+  labs(
+    x = "Log-Log Elasticity β",
+    y = "Avg Permits per 1,000 Pop (2010–2024)",
+    title = "Log-Log Elasticity vs. Average Supply",
+    subtitle = "Dashed line = unit elasticity (β = 1)"
+  ) +
+  theme_minimal(base_size = 12)
+```
