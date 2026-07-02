@@ -227,5 +227,211 @@ def _(alt, panel):
     return
 
 
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 4 — Housing Supply Elasticity
+    Two OLS models fit per state across 2010–2024.
+    - **Linear (level–level):** slope of `permits_per_1k_pop` on `hpi`. Units: permits per HPI index point.
+    - **Log-log:** slope of `log(permits)` on `log(hpi)`. Coefficient β is a unit-free elasticity: % Δ permits per % Δ HPI. β > 1 means supply outpaces price growth; β < 1 means supply lags.
+    """)
+    return
+
+
+@app.cell
+def _(panel, pd):
+    import numpy as _np
+
+    _df = panel.dropna(subset=["permits_per_1000_pop", "hpi_at_annual"]).copy()
+    _df_pos = _df[(_df["permits_per_1000_pop"] > 0) & (_df["hpi_at_annual"] > 0)].copy()
+
+    _linear_rows, _loglog_rows = [], []
+
+    for _fips, _grp in _df.groupby("fips_state"):
+        if len(_grp) < 3:
+            continue
+        _meta = dict(
+            fips_state=_fips,
+            fips_int=int(_fips),
+            state_name=_grp["state_name"].iloc[0],
+            state_abbr=_grp["state_abbr"].iloc[0],
+        )
+        _slope_lin, _ = _np.polyfit(_grp["hpi_at_annual"], _grp["permits_per_1000_pop"], 1)
+        _linear_rows.append({**_meta, "elasticity_slope": _slope_lin})
+
+    for _fips, _grp in _df_pos.groupby("fips_state"):
+        if len(_grp) < 3:
+            continue
+        _meta = dict(
+            fips_state=_fips,
+            fips_int=int(_fips),
+            state_name=_grp["state_name"].iloc[0],
+            state_abbr=_grp["state_abbr"].iloc[0],
+        )
+        _slope_ll, _ = _np.polyfit(
+            _np.log(_grp["hpi_at_annual"]), _np.log(_grp["permits_per_1000_pop"]), 1
+        )
+        _loglog_rows.append({**_meta, "elasticity_coef": _slope_ll})
+
+    elasticity_linear = (
+        pd.DataFrame(_linear_rows)
+        .sort_values("elasticity_slope", ascending=False)
+        .reset_index(drop=True)
+    )
+    elasticity_loglog = (
+        pd.DataFrame(_loglog_rows)
+        .sort_values("elasticity_coef", ascending=False)
+        .reset_index(drop=True)
+    )
+    return elasticity_linear, elasticity_loglog
+
+
+@app.cell
+def _(elasticity_linear, elasticity_loglog, states_topo):
+    import altair as _alt
+
+    def _make_choro(data, field, color_title, color_scale):
+        return (
+            _alt.Chart(_alt.topo_feature(states_topo, "states"))
+            .mark_geoshape(stroke="white", strokeWidth=0.5)
+            .transform_lookup(
+                lookup="id",
+                from_=_alt.LookupData(data, "fips_int", [field, "state_name", "state_abbr"]),
+            )
+            .encode(
+                color=_alt.Color(
+                    f"{field}:Q", scale=color_scale, title=color_title,
+                    legend=_alt.Legend(orient="bottom"),
+                ),
+                tooltip=[
+                    _alt.Tooltip("state_name:N", title="State"),
+                    _alt.Tooltip("state_abbr:N", title="Abbr"),
+                    _alt.Tooltip(f"{field}:Q", format=".4f", title=color_title),
+                ],
+            )
+            .project("albersUsa")
+            .properties(width=460, height=280)
+        )
+
+    _lin_max = float(elasticity_linear["elasticity_slope"].abs().quantile(0.95))
+    _lin = _make_choro(
+        elasticity_linear, "elasticity_slope", "Slope (permits / HPI pt)",
+        _alt.Scale(scheme="blueorange", domain=[-_lin_max, 0.0, _lin_max]),
+    ).properties(title="Linear: Level–Level OLS Slope")
+
+    _ll_dev = float((elasticity_loglog["elasticity_coef"] - 1.0).abs().quantile(0.95))
+    _ll = _make_choro(
+        elasticity_loglog, "elasticity_coef", "β (% Δ permits / % Δ HPI)",
+        _alt.Scale(scheme="blueorange", domain=[1.0 - _ll_dev, 1.0, 1.0 + _ll_dev]),
+    ).properties(title="Log-Log: Elasticity Coefficient (β = 1 → unit elasticity)")
+
+    (
+        _alt.hconcat(_lin, _ll, spacing=24)
+        .resolve_scale(color="independent")
+        .configure_view(stroke=None)
+        .configure_title(fontSize=12, anchor="start")
+    )
+    return
+
+
+@app.cell
+def _(alt, elasticity_linear, elasticity_loglog):
+    def _make_bars(data, field, x_title, fmt, color_scale):
+        return (
+            alt.Chart(data)
+            .mark_bar()
+            .encode(
+                x=alt.X(f"{field}:Q", title=x_title),
+                y=alt.Y("state_abbr:N", sort="-x", title=None),
+                color=alt.Color(f"{field}:Q", scale=color_scale, legend=None),
+                tooltip=[
+                    alt.Tooltip("state_name:N", title="State"),
+                    alt.Tooltip(f"{field}:Q", format=fmt, title=x_title),
+                ],
+            )
+            .properties(width=300, height=700)
+        )
+
+    _lin_max = float(elasticity_linear["elasticity_slope"].abs().quantile(0.95))
+    _lin_bars = _make_bars(
+        elasticity_linear, "elasticity_slope", "Slope (permits / HPI pt)", ".5f",
+        alt.Scale(scheme="blueorange", domain=[-_lin_max, 0.0, _lin_max]),
+    ).properties(title="Linear: Level–Level OLS Slope")
+
+    _ll_dev = float((elasticity_loglog["elasticity_coef"] - 1.0).abs().quantile(0.95))
+    _ll_bars = _make_bars(
+        elasticity_loglog, "elasticity_coef", "Elasticity β", ".3f",
+        alt.Scale(scheme="blueorange", domain=[1.0 - _ll_dev, 1.0, 1.0 + _ll_dev]),
+    ).properties(title="Log-Log: Elasticity Coefficient")
+
+    (
+        alt.hconcat(_lin_bars, _ll_bars, spacing=40)
+        .resolve_scale(color="independent")
+        .configure_title(fontSize=12, anchor="start")
+    )
+    return
+
+
+@app.cell
+def _(alt, elasticity_loglog, panel, pd):
+    _avg = (
+        panel.dropna(subset=["permits_per_1000_pop"])
+        .groupby("fips_state")["permits_per_1000_pop"]
+        .mean()
+        .reset_index()
+        .rename(columns={"permits_per_1000_pop": "avg_permits"})
+    )
+    _scatter_df = elasticity_loglog.merge(_avg, on="fips_state")
+    _ll_dev = float((_scatter_df["elasticity_coef"] - 1.0).abs().quantile(0.95))
+
+    _pts = (
+        alt.Chart(_scatter_df)
+        .mark_circle(size=60, opacity=0.8)
+        .encode(
+            x=alt.X("elasticity_coef:Q", title="Log-Log Elasticity β",
+                     scale=alt.Scale(zero=False)),
+            y=alt.Y("avg_permits:Q", title="Avg Permits per 1,000 Pop (2010–2024)",
+                     scale=alt.Scale(zero=False)),
+            color=alt.Color("elasticity_coef:Q",
+                            scale=alt.Scale(
+                                scheme="blueorange",
+                                domain=[1.0 - _ll_dev, 1.0, 1.0 + _ll_dev],
+                            ),
+                            legend=None),
+            tooltip=[
+                alt.Tooltip("state_name:N", title="State"),
+                alt.Tooltip("elasticity_coef:Q", format=".3f", title="Elasticity β"),
+                alt.Tooltip("avg_permits:Q", format=".2f", title="Avg Permits/1k Pop"),
+            ],
+        )
+    )
+
+    _labels = (
+        alt.Chart(_scatter_df)
+        .mark_text(dx=6, dy=-4, fontSize=9, align="left")
+        .encode(
+            x=alt.X("elasticity_coef:Q"),
+            y=alt.Y("avg_permits:Q"),
+            text="state_abbr:N",
+        )
+    )
+
+    _rule = (
+        alt.Chart(pd.DataFrame({"x": [1.0]}))
+        .mark_rule(strokeDash=[5, 3], color="gray", strokeWidth=1)
+        .encode(x=alt.X("x:Q", title=""))
+    )
+
+    (
+        (_rule + _pts + _labels)
+        .properties(
+            width=620, height=420,
+            title="Log-Log Elasticity vs. Avg Permits — do elastic states actually build more?",
+        )
+        .configure_title(fontSize=12, anchor="start")
+    )
+    return
+
+
 if __name__ == "__main__":
     app.run()
