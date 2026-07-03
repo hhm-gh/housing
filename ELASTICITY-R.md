@@ -51,25 +51,55 @@ lm(log(permits_per_1000_pop) ~ log(hpi_at_annual), data = d)
 
 Log-log requires `permits_per_1000_pop > 0` (filters out any zero-permit rows before fitting).
 
-## Color scale design
+## Coefficient normalization
 
-All three sections use `scale_fill_gradient2` / `scale_color_gradient2` with explicit
-midpoints:
+Raw OLS coefficients are not directly comparable across models: the linear slope is in
+units of permits per HPI index point (very small numbers, ~0.001–0.013), while the
+log-log coefficient β is dimensionless (~0.2–1.6). Several states also produce negative
+coefficients (notably ND, whose oil-boom cycle causes permits and prices to move
+inversely over the sample period).
 
-| Model | Midpoint | Interpretation |
-|---|---|---|
-| Linear | `midpoint = 0` | Neutral = no slope; blue = negative; orange = positive |
-| Log-log | `midpoint = 1` | Neutral = unit elasticity; blue = inelastic; orange = elastic |
-
-**Domain clamping:** `limits` is set to the 95th-percentile deviation from the midpoint,
-and `oob = scales::squish` clamps outliers to the nearest limit color rather than
-rendering them as `NA` grey. This prevents extreme states (ND oil-boom distortion)
-from collapsing the color range for all other states.
+Both are normalized to [0, 1] after fitting:
 
 ```r
-lin_lim <- quantile(abs(elasticity_linear$slope),       0.95, na.rm = TRUE)
-ll_dev  <- quantile(abs(elasticity_loglog$coef - 1.0),  0.95, na.rm = TRUE)
+slope_norm = pmax(0, slope) / max(pmax(0, slope))
+coef_norm  = pmax(0, coef)  / max(pmax(0, coef))
 ```
+
+`pmax(0, x)` clamps negatives to zero before dividing, so negative-elasticity states
+are treated as having no meaningful supply response rather than an inverse one. The
+most elastic state in each model maps to 1; all others scale proportionally.
+
+**Consequence:** the two normalized columns are on the same [0, 1] scale and can be
+compared visually across maps and bar charts without unit conversion. The ranking of
+states is preserved; only the absolute magnitude is lost.
+
+**Unit elasticity reference line:** after normalization, β = 1 no longer sits at a
+fixed x-position. Its normalized position is computed as:
+
+```r
+ll_ref_norm <- 1 / max(pmax(0, elasticity_loglog$coef))
+```
+
+This value is used as `xintercept` in the log-log bar chart and scatter plot so the
+reference line stays correctly anchored.
+
+## Color scale design
+
+Because all values are now in [0, 1] with no meaningful negative region, a sequential
+(two-color) scale replaces the earlier diverging (three-color) scale:
+
+```r
+scale_fill_gradient(low = "grey92", high = "#d6604d", limits = c(0, 1))
+```
+
+- `low = "grey92"` — near-zero elasticity (no supply response)
+- `high = "#d6604d"` — maximum elasticity (strongest supply response)
+- `limits = c(0, 1)` — fixed domain; no clamping needed since normalization already
+  bounds all values
+
+Both models use identical scale parameters, so the choropleth and bar chart colors are
+directly comparable between the linear and log-log panels.
 
 ## Geography
 
