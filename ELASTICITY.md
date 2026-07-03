@@ -97,3 +97,39 @@ Three sections in `elasticity.html`, all using a sequential grey → orange colo
    chart includes a dashed reference line at the normalized position of β = 1
 3. **Scatter** — log-log normalized β (x) vs. average permits per 1,000 pop (y),
    state labels via `ggrepel`; reveals whether high-elasticity states actually build more
+
+## Phase 3 — Finer geographies
+
+Extend the elasticity analysis from state level down through finer Census geographies.
+State-level estimates mask substantial within-state variation; county and MSA level
+captures local housing markets; tract/block group enables neighborhood-scale analysis.
+
+**Geography levels and scale:**
+- **County** (~3,200 units) — broadest data coverage; best starting point
+- **MSA/CBSA** (~390 units) — OMB-defined metro areas; FHFA HPI available here but not below
+- **Census tract** (~85,000 units) — ACS 5-year only; significant data suppression at small counts
+- **Block group** (~240,000 units) — limited to ACS 5-year; suppression increases
+- **Census block** (~8M units) — practically limited to decennial census years (2010, 2020)
+
+**Data availability constraints:**
+- ACS 1-year (used in current panel) only covers geographies with 65k+ population — below that, switch to ACS 5-year (all geographies, but averaged over 5 years)
+- FHFA HPI stops at MSA/CBSA — no tract-level house price index from standard public sources
+- SAIPE (median income, poverty) and BLS LAUS (unemployment) available at county, not below
+- Census suppresses small-cell counts at fine geographies; expect significant missingness at tract and below
+- Mortgage rate (FRED) remains national at all levels
+
+**FIPS key changes:**
+- State: 2-digit (`06`)
+- County: 5-digit (`06037` = LA County)
+- MSA/CBSA: 5-digit OMB code — not FIPS, requires crosswalk to join with county data
+- Tract: 11-digit (`06037264100`)
+- Block group: 12-digit; block: 15-digit
+
+**Python pipeline implications:**
+- Census API tract-level pulls must loop by state — no single national call
+- New scripts needed: `collect_census_acs_county.py`, `collect_saipe_county.py`, `collect_bls_county.py`, `collect_fhfa_msa.py`, `collect_census_acs_tract.py`
+- County FIPS joins are straightforward; MSA/CBSA requires OMB delineation file crosswalk
+
+**R visualization implications:**
+- `tigris` handles all levels: `counties()`, `core_based_statistical_areas()`, `tracts(state=)`, `block_groups(state=, county=)`
+- Choropleth rendering cost scales with geometry count — tract/block group maps require simplification or selective rendering
