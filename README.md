@@ -18,10 +18,14 @@ A state-level panel dataset (2010–2024) linking US housing market indicators t
 
 **Derived columns:** `affordability_ratio` (home value ÷ income), `rent_burden` (annual rent ÷ income), `permits_per_1000_pop`
 
-**Analysis notebooks:**
-- `analysis.py` — Marimo: choropleth affordability map, HPI vs. unemployment time series, supply vs. price-growth scatter
+**Analysis notebooks (Python/Marimo):**
+- `analysis.py` — Marimo: choropleth affordability map, HPI vs. unemployment time series, supply vs. price-growth scatter, housing supply elasticity (linear and log-log, side-by-side)
 - `explore.py` — Marimo: open-ended explorer — any indicator × any states × any year range
 - `analysis.ipynb` — Jupyter: static version of the curated charts
+
+**Elasticity visualization (R/Quarto):**
+- `elasticity.qmd` — standalone Quarto document: per-state OLS elasticity estimates (level-level and log-log), rendered to `elasticity.html`; no Python dependency beyond `data/panel.parquet`
+- See `ELASTICITY.md` for concept and model notes, `ELASTICITY-R.md` for implementation details
 
 ## Stack
 
@@ -29,6 +33,7 @@ A state-level panel dataset (2010–2024) linking US housing market indicators t
 - `pandas`, `pyarrow`, `duckdb` for data
 - `altair`, `vega_datasets` for charts
 - `marimo`, `jupyter`, `jupytext` for notebooks
+- R + Quarto for elasticity visualization (`elasticity.qmd`): `ggplot2`, `tigris`, `sf`, `patchwork`, `ggrepel`
 
 ## Setup
 
