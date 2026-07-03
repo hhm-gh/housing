@@ -48,35 +48,52 @@ For real (inflation-adjusted) analysis, divide by CPI or the GDP deflator. This 
 
 Log-log is standard for elasticity estimation.
 
-## Implementation plan
+## Implementation
 
-### Phase 1 — Linear approximation
+Both models are implemented in `elasticity.qmd` (R/Quarto), which reads
+`data/panel.parquet` and renders to `elasticity.html`. See `ELASTICITY-R.md` for
+full implementation details.
 
-Model `permits_per_1000_pop ~ hpi_at_annual` as a simple OLS regression per state. The slope coefficient is a linear elasticity estimate in units of permits per index point.
+### Model 1 — Linear (level–level)
 
-**Steps:**
-1. Load `data/panel.parquet`
-2. Drop rows missing `permits_per_1000_pop` or `hpi_at_annual`
-3. For each state, fit `permits_per_1000_pop = β₀ + β₁ * hpi_at_annual` via OLS (e.g., `numpy.polyfit` or `statsmodels`)
-4. Collect the β₁ slope per state into a summary dataframe
-5. Visualize as a choropleth map: fill = β₁ slope, so high-elasticity states stand out geographically
-6. Add a ranked bar chart of states by slope as a companion view
+```r
+lm(permits_per_1000_pop ~ hpi_at_annual, data = d)
+```
 
-**Limitations to note:** slope is in mixed units (permits per index point), not directly comparable to log-log elasticities; sensitive to HPI base period.
+Fit per state via `group_by` → `nest()` → `map_dbl()`. The β₁ slope is in units of
+permits per HPI index point — not directly comparable across models, and sensitive to
+the HPI base period.
 
----
+### Model 2 — Log-log (elasticity proper)
 
-### Phase 2 — Log-log regression (elasticity proper)
+```r
+lm(log(permits_per_1000_pop) ~ log(hpi_at_annual), data = d)
+```
 
-Model `log(permits_per_1000_pop) ~ log(hpi_at_annual)` per state. The slope is a unit-free elasticity: % change in permits per % change in HPI.
+Same fitting pattern. β₁ is a unit-free elasticity: % Δ permits per % Δ HPI.
+Rows with `permits_per_1000_pop ≤ 0` are dropped before fitting.
 
-**Steps:**
-1. Same data prep as Phase 1; additionally drop any rows where either variable is ≤ 0
-2. Take `log` of both variables
-3. Fit OLS per state: `log(permits) = β₀ + β₁ * log(hpi)`
-4. β₁ is the elasticity coefficient; collect per state
-5. Reuse Phase 1 choropleth and bar chart, now coloring by β₁ elasticity
-6. Add a scatter plot: x = β₁ elasticity, y = average `permits_per_1000_pop`, labeled by state abbreviation — reveals whether high-elasticity states actually build more
-7. Overlay a reference line at β₁ = 1 (unit elasticity: permits grow proportionally with prices)
+### Coefficient normalization
 
-**Target output:** a single Altair chart compound (choropleth + bar + scatter) added as a new section in `analysis.py`.
+Raw coefficients from both models are normalized to [0, 1] before visualization:
+
+```
+x_norm = max(0, x) / max(max(0, x))
+```
+
+Negative coefficients (e.g., ND, whose oil-boom cycle distorts the time series) are
+clamped to 0. This puts both models on a common scale so their choropleths and bar
+charts are visually comparable. The unit-elasticity reference line (β = 1) is
+repositioned to its normalized equivalent: `1 / max(β)`.
+
+### Visualizations
+
+Three sections in `elasticity.html`, all using a sequential grey → orange color scale
+(`low = "grey92"`, `high = "#d6604d"`) with `limits = c(0, 1)`:
+
+1. **Choropleths** — side-by-side US maps (linear left, log-log right); AK and HI
+   shifted below the contiguous US via `tigris::shift_geometry()`
+2. **Ranked bar charts** — all 51 states sorted by normalized coefficient; log-log
+   chart includes a dashed reference line at the normalized position of β = 1
+3. **Scatter** — log-log normalized β (x) vs. average permits per 1,000 pop (y),
+   state labels via `ggrepel`; reveals whether high-elasticity states actually build more
