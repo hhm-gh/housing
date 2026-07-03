@@ -43,7 +43,8 @@ elasticity_linear <- panel |>
     )
   ) |>
   select(!data) |>
-  ungroup()
+  ungroup() |>
+  mutate(slope_norm = pmax(0, slope) / max(pmax(0, slope), na.rm = TRUE))
 
 elasticity_loglog <- panel |>
   filter(!is.na(permits_per_1000_pop), !is.na(hpi_at_annual),
@@ -57,7 +58,8 @@ elasticity_loglog <- panel |>
     )
   ) |>
   select(!data) |>
-  ungroup()
+  ungroup() |>
+  mutate(coef_norm = pmax(0, coef) / max(pmax(0, coef), na.rm = TRUE))
 ```
 
 ```{r geo}
@@ -68,30 +70,28 @@ states_sf <- states(cb = TRUE, resolution = "20m", year = 2022) |>
 lin_sf <- states_sf |> left_join(elasticity_linear, by = c("GEOID" = "fips_state"))
 ll_sf  <- states_sf |> left_join(elasticity_loglog,  by = c("GEOID" = "fips_state"))
 
-lin_lim <- quantile(abs(elasticity_linear$slope),       0.95, na.rm = TRUE)
-ll_dev  <- quantile(abs(elasticity_loglog$coef  - 1.0), 0.95, na.rm = TRUE)
+# Normalized position of unit elasticity (β=1) on the [0,1] scale
+ll_ref_norm <- 1 / max(pmax(0, elasticity_loglog$coef), na.rm = TRUE)
 ```
 
 ## Choropleths
 
 ```{r choropleths}
 p_choro_lin <- ggplot(lin_sf) +
-  geom_sf(aes(fill = slope), color = "white", linewidth = 0.3) +
-  scale_fill_gradient2(
-    low = "#2166ac", mid = "grey92", high = "#d6604d", midpoint = 0,
-    limits = c(-lin_lim, lin_lim), oob = scales::squish,
-    name = "Slope\n(permits / HPI pt)"
+  geom_sf(aes(fill = slope_norm), color = "white", linewidth = 0.3) +
+  scale_fill_gradient(
+    low = "grey92", high = "#d6604d", limits = c(0, 1),
+    name = "Normalized slope"
   ) +
   labs(title = "Linear: Level–Level OLS Slope") +
   theme_void(base_size = 11) +
   theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5))
 
 p_choro_ll <- ggplot(ll_sf) +
-  geom_sf(aes(fill = coef), color = "white", linewidth = 0.3) +
-  scale_fill_gradient2(
-    low = "#2166ac", mid = "grey92", high = "#d6604d", midpoint = 1,
-    limits = c(1 - ll_dev, 1 + ll_dev), oob = scales::squish,
-    name = "β (% Δ permits / % Δ HPI)"
+  geom_sf(aes(fill = coef_norm), color = "white", linewidth = 0.3) +
+  scale_fill_gradient(
+    low = "grey92", high = "#d6604d", limits = c(0, 1),
+    name = "Normalized β"
   ) +
   labs(title = "Log-Log: Elasticity Coefficient  (β = 1 → unit elasticity)") +
   theme_void(base_size = 11) +
@@ -104,28 +104,21 @@ p_choro_lin + p_choro_ll
 
 ```{r bars, fig.height=10}
 p_bar_lin <- elasticity_linear |>
-  mutate(state_abbr = fct_reorder(state_abbr, slope)) |>
-  ggplot(aes(x = slope, y = state_abbr, fill = slope)) +
+  mutate(state_abbr = fct_reorder(state_abbr, slope_norm)) |>
+  ggplot(aes(x = slope_norm, y = state_abbr, fill = slope_norm)) +
   geom_col() +
-  scale_fill_gradient2(
-    low = "#2166ac", mid = "grey92", high = "#d6604d", midpoint = 0,
-    limits = c(-lin_lim, lin_lim), oob = scales::squish, guide = "none"
-  ) +
-  labs(x = "Slope (permits / HPI pt)", y = NULL,
-       title = "Linear: Level–Level") +
+  scale_fill_gradient(low = "grey92", high = "#d6604d", limits = c(0, 1), guide = "none") +
+  labs(x = "Normalized slope", y = NULL, title = "Linear: Level–Level") +
   theme_minimal(base_size = 11) +
   theme(plot.title = element_text(hjust = 0.5))
 
 p_bar_ll <- elasticity_loglog |>
-  mutate(state_abbr = fct_reorder(state_abbr, coef)) |>
-  ggplot(aes(x = coef, y = state_abbr, fill = coef)) +
+  mutate(state_abbr = fct_reorder(state_abbr, coef_norm)) |>
+  ggplot(aes(x = coef_norm, y = state_abbr, fill = coef_norm)) +
   geom_col() +
-  geom_vline(xintercept = 1, linetype = "dashed", color = "gray40", linewidth = 0.5) +
-  scale_fill_gradient2(
-    low = "#2166ac", mid = "grey92", high = "#d6604d", midpoint = 1,
-    limits = c(1 - ll_dev, 1 + ll_dev), oob = scales::squish, guide = "none"
-  ) +
-  labs(x = "Elasticity β", y = NULL,
+  geom_vline(xintercept = ll_ref_norm, linetype = "dashed", color = "gray40", linewidth = 0.5) +
+  scale_fill_gradient(low = "grey92", high = "#d6604d", limits = c(0, 1), guide = "none") +
+  labs(x = "Normalized β  (dashed = unit elasticity)", y = NULL,
        title = "Log-Log: Elasticity Coefficient") +
   theme_minimal(base_size = 11) +
   theme(plot.title = element_text(hjust = 0.5))
@@ -146,16 +139,13 @@ avg_permits <- panel |>
 
 elasticity_loglog |>
   left_join(avg_permits, by = c("fips_state", "state_abbr", "state_name")) |>
-  ggplot(aes(x = coef, y = avg_permits)) +
-  geom_vline(xintercept = 1, linetype = "dashed", color = "gray50") +
-  geom_point(aes(color = coef), size = 3) +
+  ggplot(aes(x = coef_norm, y = avg_permits)) +
+  geom_vline(xintercept = ll_ref_norm, linetype = "dashed", color = "gray50") +
+  geom_point(aes(color = coef_norm), size = 3) +
   geom_text_repel(aes(label = state_abbr), size = 3, max.overlaps = 40) +
-  scale_color_gradient2(
-    low = "#2166ac", mid = "grey70", high = "#d6604d", midpoint = 1,
-    limits = c(1 - ll_dev, 1 + ll_dev), oob = scales::squish, guide = "none"
-  ) +
+  scale_color_gradient(low = "grey70", high = "#d6604d", limits = c(0, 1), guide = "none") +
   labs(
-    x = "Log-Log Elasticity β",
+    x = "Normalized Log-Log Elasticity β",
     y = "Avg Permits per 1,000 Pop (2010–2024)",
     title = "Log-Log Elasticity vs. Average Supply",
     subtitle = "Dashed line = unit elasticity (β = 1)"
