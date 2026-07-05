@@ -62,6 +62,42 @@ elasticity_loglog <- panel |>
   mutate(coef_norm = pmax(0, coef) / max(pmax(0, coef), na.rm = TRUE))
 ```
 
+## Raw Data: Level–Level and Log–Log
+
+One dot per state-year. The line is a single OLS fit across all observations;
+per-state slopes (computed above) are the basis for the choropleth and bar charts.
+
+```{r raw-scatter}
+scatter_data <- panel |>
+  filter(!is.na(permits_per_1000_pop), !is.na(hpi_at_annual),
+         permits_per_1000_pop > 0, hpi_at_annual > 0)
+
+p_raw_lin <- ggplot(scatter_data, aes(x = hpi_at_annual, y = permits_per_1000_pop)) +
+  geom_point(alpha = 0.25, size = 1.2, color = "#888888") +
+  geom_smooth(method = "lm", formula = y ~ x, se = TRUE,
+              color = "#d6604d", fill = "#d6604d", alpha = 0.15, linewidth = 0.9) +
+  scale_x_continuous(labels = comma) +
+  labs(
+    x = "HPI (all-transactions)",
+    y = "Permits per 1,000 pop",
+    title = "Level–Level"
+  ) +
+  theme_minimal(base_size = 11)
+
+p_raw_log <- ggplot(scatter_data, aes(x = log(hpi_at_annual), y = log(permits_per_1000_pop))) +
+  geom_point(alpha = 0.25, size = 1.2, color = "#888888") +
+  geom_smooth(method = "lm", formula = y ~ x, se = TRUE,
+              color = "#d6604d", fill = "#d6604d", alpha = 0.15, linewidth = 0.9) +
+  labs(
+    x = "log(HPI)",
+    y = "log(Permits per 1,000 pop)",
+    title = "Log–Log"
+  ) +
+  theme_minimal(base_size = 11)
+
+p_raw_lin + p_raw_log
+```
+
 ```{r geo}
 states_sf <- states(cb = TRUE, resolution = "20m", year = 2022) |>
   filter(!STUSPS %in% c("PR", "GU", "VI", "MP", "AS")) |>
