@@ -129,6 +129,57 @@ The preview panel covers **flat geographies** only — those that support a sing
 
 ---
 
+## Tract and block group geography — issues and options
+
+Adding tract (~85k) and block group (~240k) support involves four distinct problems, each with options.
+
+### 1. Survey type changes
+
+Tracts and block groups are only covered by **ACS 5-year**, not ACS 1-year. This means:
+- Different API endpoint: `acs/acs5` instead of `acs/acs1`
+- Different (larger) variable catalog — needs a separate fetch and cache alongside `data/acs_variables.parquet`
+- Data represents a 5-year rolling average (e.g., "2019–2023"), not a point-in-time annual estimate
+- The ACS 2020 gap that affects the 1-year pipeline does not apply to 5-year (rolling window absorbs it)
+
+### 2. API query structure — no national wildcard
+
+The Census API does not support `for=tract:*&in=state:*` (all tracts nationwide in one request). Options:
+
+| Approach | Requests | Complexity | Notes |
+|---|---|---|---|
+| **State-by-state loop** | ~52 | Low | `for=tract:*&in=state:06` — consistent with existing collection pattern; practical for tracts |
+| **County-by-county loop** | ~3,200 | Medium | Required for block groups: `for=block group:*&in=state:06&in=county:037` |
+| **Census bulk FTP** | 1 per state (zip) | High | Pre-built flat files; efficient but complex to parse; different format from API responses |
+
+State-by-state API loop is the natural starting point — it matches the existing `collect_*.py` pattern and 52 requests is fast. Block groups require the county-by-county loop (thousands of requests; needs throttling and resumability).
+
+### 3. Scale, suppression, and storage
+
+| Geography | Rows (nationally) | Suppression risk |
+|---|---|---|
+| Tract | ~85,000 | Moderate — small areas with <5 observations suppressed |
+| Block group | ~240,000 | High — many cells missing, especially income/poverty breakdowns |
+
+Parquet handles sparse data efficiently; DuckDB is well-suited for querying at this scale. But variable selection becomes more important — collecting all 36k variables at tract level is impractical. The marked-variable export from the browser (`data/acs_selection.txt`) is the intended mechanism for targeted collection.
+
+### 4. Browser preview UI — drill-down required
+
+The current flat geography selector (State / County / MSA) cannot be extended to tracts and block groups because those queries require a parent hierarchy. A drill-down modal is needed:
+
+- **Tract**: State → fetch tracts (`for=tract:*&in=state:XX`)
+- **Block group**: State → County → fetch block groups (`for=block group:*&in=state:XX&in=county:YYY`)
+
+This is a different modal flow from the current `PreviewModal` — a cascading selector rather than a simple dropdown. The two levels (tract, block group) could share a single parameterized drill-down screen.
+
+### Practical sequencing
+
+1. Add ACS 5-year catalog fetch to `collect_acs_catalog.py` (new `--survey acs5` flag)
+2. Add tract preview via state-by-state drill-down in the browser
+3. Add a targeted tract collection script driven by `data/acs_selection.txt`
+4. Block group follows the same pattern but at higher query volume
+
+---
+
 ## Open questions
 
 - Should the catalog cover multiple years (to track when variables were added/removed), or just the latest year?

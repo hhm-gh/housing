@@ -32,6 +32,8 @@ Start with county — it has the broadest data coverage, manageable scale (~3,20
 - Census suppresses small-cell counts at fine geographies. Expect significant missingness at tract and below.
 - Block and block group data is practically limited to decennial years (2010, 2020) for most variables.
 
+> **ACS collection implementation details** — the survey-type change (ACS 5-year), API query structure (no national wildcard for tracts), scale/suppression considerations, and browser drill-down UI requirements are documented in [`ACS-EXPLORER.md § Tract and block group geography`](ACS-EXPLORER.md#tract-and-block-group-geography--issues-and-options).
+
 ---
 
 ## FIPS / geography key hierarchy
