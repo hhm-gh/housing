@@ -24,10 +24,14 @@ Lives in this project for now; may split into its own project once scope is clea
 
 **Result**: 36,721 variables across 1,243 concept groups (2023 ACS 1-year). Filters out geography/predicate-only entries.
 
+**Output naming**: `data/acs_variables_{survey}_{year}.parquet` — one file per survey × year combination.
+
 **Usage**:
 ```bash
-uv run collect_acs_catalog.py          # defaults to 2023
-uv run collect_acs_catalog.py 2022     # specific year
+uv run collect_acs_catalog.py                      # ACS 1-year 2023
+uv run collect_acs_catalog.py 2022                 # ACS 1-year 2022
+uv run collect_acs_catalog.py 2023 --survey acs5   # ACS 5-year 2023
+uv run collect_acs_catalog.py 2022 --survey acs5   # ACS 5-year 2022
 ```
 
 ---
@@ -90,7 +94,10 @@ Active mode is always shown in the header subtitle (marked count · theme or con
 
 **Usage**:
 ```bash
-uv run browse_acs_catalog.py
+uv run browse_acs_catalog.py                      # ACS 1-year 2023 (default)
+uv run browse_acs_catalog.py --survey acs5        # ACS 5-year 2023
+uv run browse_acs_catalog.py --year 2022          # ACS 1-year 2022
+uv run browse_acs_catalog.py --survey acs5 --year 2022   # ACS 5-year 2022
 ```
 
 ---
@@ -171,9 +178,29 @@ The current flat geography selector (State / County / MSA) cannot be extended to
 
 This is a different modal flow from the current `PreviewModal` — a cascading selector rather than a simple dropdown. The two levels (tract, block group) could share a single parameterized drill-down screen.
 
+### Data naming and organization
+
+Catalog files (variable metadata) and actual data files follow a consistent `{type}_{survey}_{year}_{geography}.parquet` scheme readable by both Python and R:
+
+```
+data/
+  # Variable catalogs — one-time fetch per survey × year
+  acs_variables_acs1_2023.parquet
+  acs_variables_acs5_2023.parquet
+
+  # Actual datasets — values for selected variables (future)
+  acs_data_acs1_2023_state.parquet        # 51 rows, all states
+  acs_data_acs5_2023_county.parquet       # ~3,200 rows
+  acs_data_acs5_2023_tract.parquet        # ~85,000 rows (all states concatenated)
+  acs_data_acs5_2023_tract_CA.parquet     # per-state if too large to concatenate
+  acs_data_acs5_2023_blockgroup_CA.parquet
+```
+
+R reads these via `read_parquet(path)` the same way it reads `panel.parquet` today. The filename is self-describing — no separate manifest needed.
+
 ### Practical sequencing
 
-1. Add ACS 5-year catalog fetch to `collect_acs_catalog.py` (new `--survey acs5` flag)
+1. ~~Add ACS 5-year catalog fetch to `collect_acs_catalog.py`~~ — **done** (`--survey acs5` flag)
 2. Add tract preview via state-by-state drill-down in the browser
 3. Add a targeted tract collection script driven by `data/acs_selection.txt`
 4. Block group follows the same pattern but at higher query volume

@@ -19,6 +19,7 @@ Keys:
   q                 Quit
 """
 
+import argparse
 import os
 import re
 import sys
@@ -36,7 +37,6 @@ from textual import work
 
 load_dotenv()
 
-CATALOG_PATH  = Path("data/acs_variables.parquet")
 EXPORT_PATH   = Path("data/acs_selection.txt")
 PREVIEW_YEAR  = 2023
 ACS_URL       = f"https://api.census.gov/data/{PREVIEW_YEAR}/acs/acs1"
@@ -488,11 +488,14 @@ class ACSBrowser(App):
         Binding("tab",    "focus_variables",     "Variables", show=False),
     ]
 
-    def __init__(self):
+    def __init__(self, catalog_path: Path):
         super().__init__()
-        if not CATALOG_PATH.exists():
-            sys.exit(f"Catalog not found: {CATALOG_PATH}\nRun: uv run collect_acs_catalog.py")
-        self.df = pd.read_parquet(CATALOG_PATH)
+        if not catalog_path.exists():
+            sys.exit(
+                f"Catalog not found: {catalog_path}\n"
+                f"Run: uv run collect_acs_catalog.py [year] [--survey acs1|acs5]"
+            )
+        self.df = pd.read_parquet(catalog_path)
         self.all_concepts: list[str] = sorted(self.df["concept"].unique())
         _concept_set = set(self.all_concepts)
         self.top_level_concepts: list[str] = [
@@ -700,4 +703,14 @@ class ACSBrowser(App):
 
 
 if __name__ == "__main__":
-    ACSBrowser().run()
+    parser = argparse.ArgumentParser(description="Browse ACS variable catalog.")
+    parser.add_argument("--survey", choices=["acs1", "acs5"], default="acs1",
+                        help="ACS survey type (default: acs1)")
+    parser.add_argument("--year", type=int, default=2023,
+                        help="ACS vintage year (default: 2023)")
+    args = parser.parse_args()
+    catalog_path = Path(f"data/acs_variables_{args.survey}_{args.year}.parquet")
+    label = "1-year" if args.survey == "acs1" else "5-year"
+    app = ACSBrowser(catalog_path)
+    app.TITLE = f"ACS Variable Browser  —  {label} {args.year}"
+    app.run()
