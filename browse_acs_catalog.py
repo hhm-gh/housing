@@ -10,6 +10,7 @@ Keys:
   Type              Filter concept list (when concept pane is focused)
   Enter             Confirm concept filter, move to variable table
   Space             Mark / unmark highlighted variable
+  g                 Open theme picker (filter concept list by subject area)
   t                 Toggle: show all concepts / top-level only (suppress demographic refinements)
   f                 Open full-screen concept browser
   p                 Preview data sample for highlighted variable (all states, 2023)
@@ -68,6 +69,65 @@ def _is_refinement(concept: str, concept_set: set[str]) -> bool:
     if not m:
         return False
     return concept[:m.start()].strip() in concept_set
+
+
+# Ordered: first matching theme wins.
+_THEME_RULES: list[tuple[str, list[str]]] = [
+    ("Allocation",                   ["allocation of", "allocation --"]),
+    ("Aggregate & Median",           ["aggregate ", "median "]),
+    ("Technology",                   ["computer", "internet"]),
+    ("Geographic Mobility",          ["geographical mobility", "residence 1 year ago", "migration"]),
+    ("Disability",                   ["disability", "ambulatory difficulty", "cognitive difficulty",
+                                      "hearing difficulty", "vision difficulty", "self-care difficulty",
+                                      "independent living difficulty"]),
+    ("Health Insurance",             ["health insurance", "insurance coverage"]),
+    ("Commuting",                    ["travel time to work", "means of transportation to work",
+                                      "time of departure to go to work", "vehicles (car, truck",
+                                      "place of work"]),
+    ("Education",                    ["educational attainment", "field of degree", "school enrollment",
+                                      "enrolled in school", "grade enrolled"]),
+    ("Language & Immigration",       ["language spoken at home", "ability to speak english",
+                                      "place of birth", "year of entry", "period of entry",
+                                      "ancestry", "year of naturalization"]),
+    ("Veterans",                     ["veteran"]),
+    ("Food Stamps / SNAP",           ["food stamp", "snap"]),
+    ("Family & Living Arrangements", ["marital status", "marriage in the past", "married in the past",
+                                      "divorced in the past", "grandparent", "fertility",
+                                      "own children under 18", "living arrangements", "living alone",
+                                      "unmarried-partner", "unmarried partner"]),
+    ("Employment & Labor Force",     ["employment status", "class of worker", "industry",
+                                      "occupation", "labor force", "work experience",
+                                      "hours worked", "weeks worked", "self-employ"]),
+    ("Poverty",                      ["poverty", "ratio of income to poverty", "income deficit"]),
+    ("Housing Stock",                ["units in structure", "number of rooms", "number of bedrooms",
+                                      "year structure built", "house heating fuel", "vacancy",
+                                      "plumbing", "kitchen facilities", "telephone service"]),
+    ("Housing Costs",                ["gross rent", "selected monthly owner costs", "contract rent",
+                                      "price asked", "rent asked", "owner costs"]),
+    ("Tenure & Mortgage",            ["tenure", "mortgage", "year householder moved",
+                                      "meals included in rent"]),
+    ("Household Structure",          ["household size", "household type", "group quarters",
+                                      "nonfamily household", "family type", "householder",
+                                      "presence of own children", "subfamilies"]),
+    ("Income",                       ["income in the past 12 months", "earnings in the past 12 months",
+                                      "wages and salary income", "social security income",
+                                      "retirement income", "supplemental security income",
+                                      "self-employment income", "public assistance income",
+                                      "interest, dividends", "aggregate income", "aggregate earnings",
+                                      "aggregate wage"]),
+    ("Demographics & Population",    ["sex by age", "total population", "hispanic or latino",
+                                      "citizenship status", "nativity of the population",
+                                      "race alone", "sex and age"]),
+]
+
+ALL_THEMES = [name for name, _ in _THEME_RULES] + ["Other"]
+
+def _assign_theme(concept: str) -> str:
+    lower = concept.lower()
+    for theme, keywords in _THEME_RULES:
+        if any(kw in lower for kw in keywords):
+            return theme
+    return "Other"
 
 
 def _clean_label(label: str) -> str:
@@ -311,6 +371,72 @@ class ConceptScreen(ModalScreen[str | None]):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Theme picker screen
+# ──────────────────────────────────────────────────────────────────────────────
+
+class ThemeScreen(ModalScreen[str | None]):
+    """Full-screen theme picker. Dismisses with selected theme name, or None to clear."""
+
+    BINDINGS = [Binding("escape", "dismiss_none", "Close")]
+
+    CSS = """
+    ThemeScreen {
+        background: $surface;
+        padding: 1 2;
+    }
+
+    #th-title {
+        height: 1;
+        margin-bottom: 1;
+        color: $text-muted;
+    }
+
+    #th-list {
+        height: 1fr;
+        border: solid $primary-darken-2;
+    }
+
+    #th-status {
+        height: 1;
+        margin-top: 1;
+        color: $text-muted;
+    }
+    """
+
+    def __init__(self, theme_counts: dict[str, int], active_theme: str | None) -> None:
+        super().__init__()
+        self.theme_counts  = theme_counts
+        self.active_theme  = active_theme
+
+    def compose(self) -> ComposeResult:
+        yield Label("Theme Browser  —  Enter to select, Escape to close", id="th-title")
+        yield ListView(id="th-list")
+        yield Static("", id="th-status")
+
+    def on_mount(self) -> None:
+        lv = self.query_one("#th-list", ListView)
+        # "(All themes)" always first
+        lv.append(ListItem(Label("[italic]( All themes )[/italic]"), name="__all__"))
+        for theme in ALL_THEMES:
+            count = self.theme_counts.get(theme, 0)
+            if count == 0:
+                continue
+            marker = "▶ " if theme == self.active_theme else "  "
+            lv.append(ListItem(Label(f"{marker}{theme}  [{count}]"), name=theme))
+        n = sum(self.theme_counts.values())
+        self.query_one("#th-status", Static).update(
+            f"{len(self.theme_counts)} themes  |  {n} concepts total"
+        )
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        name = event.item.name
+        self.dismiss(None if name == "__all__" else name)
+
+    def action_dismiss_none(self) -> None:
+        self.dismiss(None if self.active_theme is None else self.active_theme)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Main browser
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -353,6 +479,7 @@ class ACSBrowser(App):
 
     BINDINGS = [
         Binding("q",      "quit",                "Quit"),
+        Binding("g",      "select_theme",        "Themes"),
         Binding("t",      "toggle_refinements",  "Top-level only"),
         Binding("f",      "fullscreen_concepts", "All concepts"),
         Binding("p",      "preview",             "Preview"),
@@ -371,7 +498,13 @@ class ACSBrowser(App):
         self.top_level_concepts: list[str] = [
             c for c in self.all_concepts if not _is_refinement(c, _concept_set)
         ]
+        # theme map over top-level concepts only
+        self._theme_map: dict[str, list[str]] = {}
+        for c in self.top_level_concepts:
+            self._theme_map.setdefault(_assign_theme(c), []).append(c)
+        self._theme_counts: dict[str, int] = {t: len(v) for t, v in self._theme_map.items()}
         self._top_level_only: bool = False
+        self._active_theme: str | None = None
         self.marked: set[str] = set()
         self._current_concept: str | None = None
         self._current_var: str | None = None
@@ -412,6 +545,9 @@ class ACSBrowser(App):
             lv.append(ListItem(Label(c), name=c))
 
     def _active_concepts(self) -> list[str]:
+        if self._active_theme is not None:
+            # Theme view always works on top-level concepts
+            return self._theme_map.get(self._active_theme, [])
         return self.top_level_concepts if self._top_level_only else self.all_concepts
 
     def on_input_changed(self, event: Input.Changed) -> None:
@@ -500,8 +636,13 @@ class ACSBrowser(App):
     def _update_subtitle(self) -> None:
         n = len(self.marked)
         marked_str = f"{n} variable{'s' if n != 1 else ''} marked"
-        mode_str = f"top-level only ({len(self.top_level_concepts):,})" if self._top_level_only \
-                   else f"all concepts ({len(self.all_concepts):,})"
+        if self._active_theme:
+            count = len(self._theme_map.get(self._active_theme, []))
+            mode_str = f"theme: {self._active_theme} ({count:,})"
+        elif self._top_level_only:
+            mode_str = f"top-level only ({len(self.top_level_concepts):,})"
+        else:
+            mode_str = f"all concepts ({len(self.all_concepts):,})"
         self.sub_title = f"{marked_str}  |  {mode_str}"
 
     # ------------------------------------------------------------------
@@ -521,6 +662,15 @@ class ACSBrowser(App):
         rows = self.df[self.df["name"] == self._current_var]
         label = rows.iloc[0]["label"] if not rows.empty else ""
         self.push_screen(PreviewModal(self._current_var, label, self._api_key))
+
+    def action_select_theme(self) -> None:
+        def on_selected(theme: str | None) -> None:
+            self._active_theme = theme
+            query = self.query_one("#concept-filter", Input).value.strip().lower()
+            filtered = [c for c in self._active_concepts() if query in c.lower()]
+            self._populate_concepts(filtered)
+            self._update_subtitle()
+        self.push_screen(ThemeScreen(self._theme_counts, self._active_theme), on_selected)
 
     def action_toggle_refinements(self) -> None:
         self._top_level_only = not self._top_level_only
