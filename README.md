@@ -24,13 +24,17 @@ A state-level panel dataset (2010–2024) linking US housing market indicators t
 - `analysis.ipynb` — Jupyter: static version of the curated charts
 
 **ACS variable explorer (Python/Textual):**
-- `collect_acs_catalog.py` — downloads the full ACS 1-year variable catalog (~36k variables, 1,243 concept groups) from the Census API; no key required; saves to `data/acs_variables.parquet`
+- `collect_acs_catalog.py` — downloads the ACS variable catalog from the Census API (no key required); supports ACS 1-year and 5-year, any vintage year; output named `data/acs_variables_{survey}_{year}.parquet`
 - `browse_acs_catalog.py` — keyboard-driven terminal UI for browsing the catalog, previewing live data by state/county/MSA, marking variables of interest, and exporting selections; see `ACS-EXPLORER.md` for full key reference
 
 ```bash
-uv run collect_acs_catalog.py   # fetch catalog (run once)
-uv run browse_acs_catalog.py    # launch browser
+uv run collect_acs_catalog.py                      # ACS 1-year 2023 (default)
+uv run collect_acs_catalog.py 2023 --survey acs5   # ACS 5-year 2023 (needed for tract/county)
+uv run browse_acs_catalog.py                       # browse 1-year catalog
+uv run browse_acs_catalog.py --survey acs5         # browse 5-year catalog
 ```
+
+See `ACS-EXPLORER.md` for full implementation status and key bindings, `FINER-GEOMETRIES.md` for the roadmap to county/tract/block-group data.
 
 **Elasticity visualization (R/Quarto):**
 - `elasticity.qmd` — standalone Quarto document: per-state OLS elasticity estimates (level-level and log-log), rendered to `elasticity.html`; no Python dependency beyond `data/panel.parquet`
