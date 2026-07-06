@@ -10,6 +10,8 @@ Keys:
   Type              Filter concept list (when concept pane is focused)
   Enter             Confirm concept filter, move to variable table
   Space             Mark / unmark highlighted variable
+  t                 Toggle: show all concepts / top-level only (suppress demographic refinements)
+  f                 Open full-screen concept browser
   p                 Preview data sample for highlighted variable (all states, 2023)
   e                 Export marked variables to data/acs_selection.txt
   Escape            Return focus to concept list / close preview
@@ -17,6 +19,7 @@ Keys:
 """
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -55,6 +58,16 @@ GEO_ROW_LABEL = {
     "county": "counties",
     "msa":    "MSAs/CBSAs",
 }
+
+
+_TRAILING_PAREN = re.compile(r'\s*\([^)]*\)\s*$')
+
+def _is_refinement(concept: str, concept_set: set[str]) -> bool:
+    """True if stripping the trailing (...) yields a concept that exists in the catalog."""
+    m = _TRAILING_PAREN.search(concept)
+    if not m:
+        return False
+    return concept[:m.start()].strip() in concept_set
 
 
 def _clean_label(label: str) -> str:
@@ -339,12 +352,13 @@ class ACSBrowser(App):
     """
 
     BINDINGS = [
-        Binding("q",      "quit",              "Quit"),
-        Binding("f",      "fullscreen_concepts","All concepts"),
-        Binding("p",      "preview",           "Preview"),
-        Binding("e",      "export",            "Export marked"),
-        Binding("escape", "focus_concepts",    "Back to concepts"),
-        Binding("tab",    "focus_variables",   "Variables", show=False),
+        Binding("q",      "quit",                "Quit"),
+        Binding("t",      "toggle_refinements",  "Top-level only"),
+        Binding("f",      "fullscreen_concepts", "All concepts"),
+        Binding("p",      "preview",             "Preview"),
+        Binding("e",      "export",              "Export marked"),
+        Binding("escape", "focus_concepts",      "Back to concepts"),
+        Binding("tab",    "focus_variables",     "Variables", show=False),
     ]
 
     def __init__(self):
@@ -353,6 +367,11 @@ class ACSBrowser(App):
             sys.exit(f"Catalog not found: {CATALOG_PATH}\nRun: uv run collect_acs_catalog.py")
         self.df = pd.read_parquet(CATALOG_PATH)
         self.all_concepts: list[str] = sorted(self.df["concept"].unique())
+        _concept_set = set(self.all_concepts)
+        self.top_level_concepts: list[str] = [
+            c for c in self.all_concepts if not _is_refinement(c, _concept_set)
+        ]
+        self._top_level_only: bool = False
         self.marked: set[str] = set()
         self._current_concept: str | None = None
         self._current_var: str | None = None
@@ -378,7 +397,7 @@ class ACSBrowser(App):
         table.add_column("Variable", key="var", width=16)
         table.add_column("Label",    key="lbl")
 
-        self._populate_concepts(self.all_concepts)
+        self._populate_concepts(self._active_concepts())
         self.query_one("#concept-list", ListView).focus()
         self._update_subtitle()
 
@@ -392,9 +411,12 @@ class ACSBrowser(App):
         for c in concepts:
             lv.append(ListItem(Label(c), name=c))
 
+    def _active_concepts(self) -> list[str]:
+        return self.top_level_concepts if self._top_level_only else self.all_concepts
+
     def on_input_changed(self, event: Input.Changed) -> None:
         query = event.value.strip().lower()
-        filtered = [c for c in self.all_concepts if query in c.lower()]
+        filtered = [c for c in self._active_concepts() if query in c.lower()]
         self._populate_concepts(filtered)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -477,7 +499,10 @@ class ACSBrowser(App):
 
     def _update_subtitle(self) -> None:
         n = len(self.marked)
-        self.sub_title = f"{n} variable{'s' if n != 1 else ''} marked"
+        marked_str = f"{n} variable{'s' if n != 1 else ''} marked"
+        mode_str = f"top-level only ({len(self.top_level_concepts):,})" if self._top_level_only \
+                   else f"all concepts ({len(self.all_concepts):,})"
+        self.sub_title = f"{marked_str}  |  {mode_str}"
 
     # ------------------------------------------------------------------
     # Actions
@@ -497,11 +522,18 @@ class ACSBrowser(App):
         label = rows.iloc[0]["label"] if not rows.empty else ""
         self.push_screen(PreviewModal(self._current_var, label, self._api_key))
 
+    def action_toggle_refinements(self) -> None:
+        self._top_level_only = not self._top_level_only
+        query = self.query_one("#concept-filter", Input).value.strip().lower()
+        filtered = [c for c in self._active_concepts() if query in c.lower()]
+        self._populate_concepts(filtered)
+        self._update_subtitle()
+
     def action_fullscreen_concepts(self) -> None:
         def on_selected(concept: str | None) -> None:
             if concept:
                 self._load_concept(concept)
-        self.push_screen(ConceptScreen(self.all_concepts), on_selected)
+        self.push_screen(ConceptScreen(self._active_concepts()), on_selected)
 
     def action_export(self) -> None:
         if not self.marked:
