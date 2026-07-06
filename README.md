@@ -23,6 +23,15 @@ A state-level panel dataset (2010–2024) linking US housing market indicators t
 - `explore.py` — Marimo: open-ended explorer — any indicator × any states × any year range
 - `analysis.ipynb` — Jupyter: static version of the curated charts
 
+**ACS variable explorer (Python/Textual):**
+- `collect_acs_catalog.py` — downloads the full ACS 1-year variable catalog (~36k variables, 1,243 concept groups) from the Census API; no key required; saves to `data/acs_variables.parquet`
+- `browse_acs_catalog.py` — keyboard-driven terminal UI for browsing the catalog, previewing live data by state/county/MSA, marking variables of interest, and exporting selections; see `ACS-EXPLORER.md` for full key reference
+
+```bash
+uv run collect_acs_catalog.py   # fetch catalog (run once)
+uv run browse_acs_catalog.py    # launch browser
+```
+
 **Elasticity visualization (R/Quarto):**
 - `elasticity.qmd` — standalone Quarto document: per-state OLS elasticity estimates (level-level and log-log), rendered to `elasticity.html`; no Python dependency beyond `data/panel.parquet`
 - See `ELASTICITY.md` for concept and model notes, `ELASTICITY-R.md` for implementation details

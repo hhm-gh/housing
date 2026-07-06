@@ -7,6 +7,7 @@ Build a state-level panel dataset (2010–2024) linking US housing market indica
 - **Python** managed with **`uv`** (uv 0.11.16, Python 3.14)
 - `pandas`, `requests`, `fredapi`, `duckdb`, `pyarrow`, `xlrd`, `openpyxl`
 - `altair`, `vega_datasets`, `marimo`, `jupyter`, `jupytext`
+- `textual`, `python-dotenv` — ACS variable explorer TUI
 - Install deps: `uv sync` (all deps in pyproject.toml)
 
 ## GitHub
@@ -23,12 +24,16 @@ housing/
 ├── collect_bls.py          # LAUS unemployment rate (BLS API v2)
 ├── collect_fred.py         # 30-yr mortgage rate (FRED API)
 ├── assemble_panel.py       # Joins all sources into panel.parquet + panel.duckdb
+├── collect_acs_catalog.py  # Fetches full ACS 1-yr variable catalog → data/acs_variables.parquet
+├── browse_acs_catalog.py   # Textual TUI: browse catalog, preview live data, mark/export variables
 ├── analysis.ipynb          # Jupyter: curated charts (choropleth, time series, scatter)
 ├── analysis_nb.py          # Jupytext source for analysis.ipynb
 ├── analysis.py             # Marimo: same curated charts, reactive widgets
 ├── explore.py              # Marimo: open-ended explorer — any column × states × years
 ├── .env                    # API keys (gitignored)
 └── data/                   # Output files (gitignored)
+    ├── acs_variables.parquet  ← ACS 1-yr variable catalog (36k variables, 1,243 concepts)
+    ├── acs_selection.txt      ← marked variable export from browser (optional)
     ├── acs_housing.parquet
     ├── saipe.parquet
     ├── pep_population.parquet
