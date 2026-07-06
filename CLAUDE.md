@@ -133,10 +133,20 @@ uv run jupyter notebook analysis.ipynb
 - `mo.ui.dropdown(value=...)` must match an options key (the label), not the underlying value
 - Does not always hot-reload on file save — restart with `Ctrl+C` + `uv run marimo edit <file>`
 
+## Documentation
+- `ACS-EXPLORER.md` — ACS variable browser implementation status and key bindings
+- `ACS-CONCEPTS.md` — 15-theme overview of ACS concept groups
+- `FINER-GEOMETRIES.md` — roadmap for county, MSA, tract, block group data; data availability matrix
+- `HOUSING-ISSUES.md` — research summary: ACS 5-year variables for homelessness and housing cost analysis at tract/block group level; data availability constraints; HUD CHAS and AHAR sources
+- `ELASTICITY.md` — supply elasticity concept notes and model summary
+- `ELASTICITY-R.md` — R implementation details for elasticity viz
+
 ## Analysis layer (next steps)
-- Affordability and rent burden trends by state
-- Housing supply elasticity: permit growth vs. population/employment growth
-- Cross-state regression: how well does employment/income predict HPI growth?
+- **Target geography: tract and block group** (design constraint) — requires ACS 5-year; FHFA HPI not available at this level, use ACS B25077/B25064 as price outcomes instead
+- Collect ACS 5-year variables at county level first, then tract (see `FINER-GEOMETRIES.md`)
+- Homelessness risk mapping at tract level using ACS 5-year proxies (overcrowding, severe rent burden, poverty, disability, mobility) — HUD AHAR PIT counts are CoC-level only, not tract
+- HUD CHAS (income-adjusted cost burden, tract level, 2021 vintage) + ACS B25070/B25071 for affordability analysis
+- Cross-state regression at state level: how well does employment/income predict HPI growth?
 - Pre/post-COVID comparisons (2019 vs. 2021–2024)
 
 ## Next step when resuming

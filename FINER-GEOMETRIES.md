@@ -110,6 +110,20 @@ Currently hard-coded to `data/panel.parquet` (line 18). Needs:
 
 ---
 
+## Tract/block group analysis design constraints
+
+**Confirmed target geography: tract and block group.** This locks in several consequences:
+
+- **ACS 5-year is required** — ACS 1-year does not publish at tract or block group level
+- **FHFA HPI is not available** at tract level — ACS B25077 (median home value) and B25064 (median gross rent) become the price outcome variables instead of a transactions-based index
+- **HUD AHAR PIT counts are CoC-level only** — direct homelessness regression at tract level is not possible from public data; instead use ACS variables as risk proxies (overcrowding B25014, severe rent burden B25070, poverty B17001, mobility B07001, disability B18101)
+- **HUD CHAS** (income-adjusted cost burden) is available at tract level but not block group; most recent vintage is 2021; see [HUD USER](https://www.huduser.gov/portal/datasets/cp.html)
+- **BPS, BLS LAUS, SAIPE, PEP** are all county-level only — none extend to tract or block group
+
+Full data availability matrix and analytical approach documented in `HOUSING-ISSUES.md`.
+
+---
+
 ## Open questions
 
 - Do county building permits map cleanly to county FIPS, or do BPS place-level permits need aggregation?
