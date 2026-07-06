@@ -47,29 +47,44 @@ uv run collect_acs_catalog.py 2022     # specific year
 
 | Key | Action |
 |---|---|
-| Type (left pane) | Filter concept list |
+| Type (left pane) | Filter concept list by name |
 | Enter | Move focus from filter input to concept list |
-| `f` | Open full-screen concept browser (entire terminal, same filter behaviour) |
 | Arrow keys | Navigate within focused pane |
 | Tab / Escape | Switch between concept list and variable table |
 | Space | Mark / unmark highlighted variable (shown with ★) |
+| `g` | Open theme picker — filter concept list by subject area |
+| `t` | Toggle: all concepts (1,243) ↔ top-level only (901, refinements suppressed) |
+| `f` | Open full-screen concept browser |
 | `p` | Open live data preview for highlighted variable |
 | `e` | Export marked variable names to `data/acs_selection.txt` |
 | `q` | Quit |
 
-**Preview panel** (`p` key):
-- Fetches 2023 ACS 1-year data for the selected variable
-- Geography selector: **State** / **County** (65k+ pop, ACS 1-yr) / **MSA/CBSA**
-- Switching geography clears and re-fetches; in-flight requests are cancelled
-- Filter input narrows the results table by geography name in real time
-- Sorted by value descending; non-numeric values placed at end
-- Requires `CENSUS_API_KEY` in `.env`
+Active mode is always shown in the header subtitle (marked count · theme or concept count).
+
+**Theme picker** (`g` key):
+- Full-screen overlay listing all subject-area themes with concept counts (see `ACS-CONCEPTS.md`)
+- `(All themes)` at top clears the theme filter
+- Active theme marked with `▶`
+- Theme view always operates on top-level concepts (refinements suppressed)
+- Escape with no selection keeps the current theme
+
+**Refinement toggle** (`t` key):
+- Suppresses demographic refinements — concepts whose trailing `(...)` matches a base concept in the catalog
+- 342 concepts suppressed; 119 concepts with trailing parentheticals are kept because no base exists
+- Inactive when a theme is selected (theme view is always top-level)
 
 **Full-screen concept browser** (`f` key):
-- Pushes a full-terminal overlay listing all 1,243 concept groups
-- Same filter-as-you-type behaviour as the sidebar
-- Selecting a concept loads its variables in the main view and closes the overlay
-- Status line shows match count while filtering
+- Full-terminal overlay of the currently active concept list (respects theme and toggle state)
+- Filter-as-you-type; status line shows match count
+- Selecting a concept loads its variables and closes the overlay
+
+**Preview panel** (`p` key):
+- Fetches 2023 ACS 1-year data for the highlighted variable
+- Geography selector: **State** / **County** (65k+ pop, ACS 1-yr) / **MSA/CBSA**
+- Switching geography cancels any in-flight request and re-fetches
+- Filter input narrows results by geography name in real time
+- Sorted by value descending; non-numeric values at end
+- Requires `CENSUS_API_KEY` in `.env`
 
 **Export**: `data/acs_selection.txt` — one variable ID per line, sorted alphabetically
 
